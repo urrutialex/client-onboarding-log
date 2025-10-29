@@ -61,6 +61,7 @@ function logAppointment() {
     
     const eventDate = event.getStartTime();
     const description = event.getDescription();
+    Logger.log('Raw event description: ' + description);
     const guests = event.getGuests();
     
     Logger.log('Description: ' + description); // Debug: Show the full event description
@@ -74,13 +75,15 @@ function logAppointment() {
     }
 
     // --- SIMPLIFIED EMAIL EXTRACTION (SINCE GUESTS[0] IS A STRING) ---
-    const clientEmail = guests[0]; // Directly use the string as email
+    // const clientEmail = guests[0]; // Directly use the string as email  -- REMOVED, now parsed from description
 
     // --- DECLARE NAME VARIABLES ---
     let firstName = 'N/A';
     let lastName = 'N/A';
+    let clientEmail = 'N/A';
+    let phone = 'N/A';
 
-    // Parse the name (First Name / Last Name) from the description
+    // Parse the name, email, and phone from the description
     if (description) {
       // Handle HTML line breaks
       const descLines = description.replace(/<br\s*\/?>/gi, '\n').split('\n');
@@ -102,6 +105,13 @@ function logAppointment() {
         } else if (nameParts.length === 1) {
           firstName = nameLine;
         }
+        // Extract email and phone from the next lines
+        if (bookedByIndex + 2 < descLines.length) {
+          clientEmail = descLines[bookedByIndex + 2].trim();
+        }
+        if (bookedByIndex + 3 < descLines.length) {
+          phone = descLines[bookedByIndex + 3].trim();
+        }
       }
       
       // Fallback to "First name" / "Last name" parsing
@@ -122,6 +132,9 @@ function logAppointment() {
 
     // Extract Custom Fields (Phone, Insurance, Location)
     const data = extractCustomData(description, CUSTOM_LABELS, clientEmail);
+    
+    // Override phone with the directly parsed value from description
+    data.phone = phone;
     
     Logger.log('Extracted data: ' + JSON.stringify(data)); // Debug: Show parsed fields
     
