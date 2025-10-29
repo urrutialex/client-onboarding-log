@@ -64,7 +64,7 @@ function logAppointment() {
     const guests = event.getGuests();
     
     Logger.log('Event has ' + guests.length + ' guests'); // Debug
-    Logger.log('Guests emails: ' + JSON.stringify(guests.map(g => g.getEmail()))); // Debug: Show guest emails
+    Logger.log('Guests emails: ' + JSON.stringify(guests.map(g => typeof g === 'string' ? g : g.getEmail()))); // Debug: Show guest emails
     Logger.log('Raw event description: ' + description); // Debug: Show raw description
     
     // 3. FILTER: Ensure it has guests (i.e., a client booked it)
