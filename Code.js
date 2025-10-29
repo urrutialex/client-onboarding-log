@@ -61,12 +61,11 @@ function logAppointment() {
     
     const eventDate = event.getStartTime();
     const description = event.getDescription();
-    Logger.log('Raw event description: ' + description);
     const guests = event.getGuests();
     
-    Logger.log('Description: ' + description); // Debug: Show the full event description
-    
     Logger.log('Event has ' + guests.length + ' guests'); // Debug
+    Logger.log('Guests emails: ' + JSON.stringify(guests.map(g => g.getEmail()))); // Debug: Show guest emails
+    Logger.log('Raw event description: ' + description); // Debug: Show raw description
     
     // 3. FILTER: Ensure it has guests (i.e., a client booked it)
     if (guests.length === 0) {
@@ -105,14 +104,34 @@ function logAppointment() {
         } else if (nameParts.length === 1) {
           firstName = nameLine;
         }
-        // Extract email and phone from the next lines
-        if (bookedByIndex + 2 < descLines.length) {
-          clientEmail = descLines[bookedByIndex + 2].trim();
+        // Extract email and phone: Find the first email-like line after the name, then the next line as phone
+        const emailRegex = /^\S+@\S+\.\S+$/;
+        let emailFound = false;
+        for (let j = bookedByIndex + 2; j < descLines.length; j++) {
+          const line = descLines[j].trim();
+          if (emailRegex.test(line)) {
+            clientEmail = line;
+            // The next line after email is phone
+            if (j + 1 < descLines.length) {
+              phone = descLines[j + 1].trim();
+            }
+            emailFound = true;
+            break;
+          }
         }
-        if (bookedByIndex + 3 < descLines.length) {
-          phone = descLines[bookedByIndex + 3].trim();
+        if (!emailFound) {
+          // Fallback: if no email found, use the assumed positions
+          if (bookedByIndex + 2 < descLines.length) {
+            clientEmail = descLines[bookedByIndex + 2].trim();
+          }
+          if (bookedByIndex + 3 < descLines.length) {
+            phone = descLines[bookedByIndex + 3].trim();
+          }
         }
       }
+      
+      Logger.log('Parsed clientEmail: ' + clientEmail); // Debug: Show parsed email
+      Logger.log('Parsed phone: ' + phone); // Debug: Show parsed phone
       
       // Fallback to "First name" / "Last name" parsing
       for (const line of descLines) {
